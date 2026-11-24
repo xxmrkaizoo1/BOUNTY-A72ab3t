@@ -1,0 +1,75 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // An admin is any signed-in user with a document at /admins/{uid}.
+    // Create that document by hand in the Firebase console (see README).
+    function isAdmin() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function validSong(d) {
+      return d.keys().hasAll(['title', 'artist', 'genre', 'mood', 'bpm', 'energy',
+                              'acousticness', 'hue', 'audioUrl', 'audioPath', 'published'])
+        && d.title is string && d.title.size() > 0 && d.title.size() <= 120
+        && d.artist is string && d.artist.size() > 0 && d.artist.size() <= 120
+        && d.album is string && d.album.size() <= 120
+        && d.genre in ['electronic', 'ambient', 'rock', 'jazz', 'hiphop', 'classical']
+        && d.mood in ['chill', 'energetic', 'focus', 'happy', 'melancholy']
+        && d.bpm is number && d.bpm >= 40 && d.bpm <= 220
+        && d.energy is number && d.energy >= 0 && d.energy <= 1
+        && d.acousticness is number && d.acousticness >= 0 && d.acousticness <= 1
+        && d.hue is number && d.hue >= 0 && d.hue <= 360
+        && d.audioUrl is string && d.audioPath is string
+        // covers are small inline JPEG data URLs (≈20–30 KB); cap well below the 1 MiB doc limit
+        && (d.coverUrl == null || (d.coverUrl is string && d.coverUrl.size() <= 200000))
+        && d.published is bool;
+    }
+
+    match /songs/{songId} {
+      // Listeners see published songs; admins also see drafts.
+      allow read: if resource.data.published == true || isAdmin();
+      allow create, update: if isAdmin() && validSong(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // Uploaded audio, split into ≤ 900 KB chunks (free-plan alternative to Cloud Storage).
+    // Fetchable by exact id so listeners can play songs, but not listable,
+    // so draft audio can't be discovered (file ids are random and unguessable).
+    match /files/{fileId} {
+      allow get: if true;
+      allow list: if false;
+      allow create: if isAdmin()
+        && request.resource.data.contentType is string
+        && request.resource.data.contentType.matches('audio/.*')
+        && request.resource.data.size is int
+        && request.resource.data.size > 0
+        && request.resource.data.size <= 15 * 1024 * 1024
+        && request.resource.data.chunks is int
+        && request.resource.data.chunks >= 1
+        && request.resource.data.chunks <= 20;
+      allow update: if false;
+      allow delete: if isAdmin();
+
+      match /chunks/{chunkId} {
+        allow get: if true;
+        allow list: if false;
+        allow create: if isAdmin()
+          && chunkId.matches('[0-9]{3}')
+          && request.resource.data.keys().hasOnly(['data'])
+          && request.resource.data.data is bytes
+          && request.resource.data.data.size() <= 900000;
+        allow update: if false;
+        allow delete: if isAdmin();
+      }
+    }
+
+    match /admins/{uid} {
+      // A user may check whether they themselves are an admin. Nobody can grant admin from the client.
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+  }
+}

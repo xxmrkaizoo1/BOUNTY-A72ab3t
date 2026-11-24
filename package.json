@@ -1,0 +1,22 @@
+{
+  "name": "mymusic",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:emulator": "vite --mode emulator",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "emulators": "firebase emulators:start --project demo-pulse",
+    "deploy": "npm run build && firebase deploy --only hosting",
+    "deploy:all": "npm run build && firebase deploy --only hosting,firestore"
+  },
+  "devDependencies": {
+    "typescript": "~5.6.3",
+    "vite": "^5.4.11"
+  },
+  "dependencies": {
+    "firebase": "^13.4.0"
+  }
+}
