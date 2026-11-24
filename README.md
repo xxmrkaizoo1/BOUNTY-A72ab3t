@@ -28,6 +28,7 @@ Recommendations, mood mixes, a 3D glass design, an admin studio for publishing s
 - [Getting started](#getting-started)
 - [Deploying](#deploying)
 - [Free-plan limits](#free-plan-limits)
+- [Roadmap: future features](#roadmap-future-features)
 
 ## Screenshots
 
@@ -326,6 +327,47 @@ Everything runs on Firebase's free Spark plan. Firestore's allowance is the ceil
 A Studio song downloads fully before it starts (1–2 s on normal internet), and the next song in the queue is fetched ahead of time. Upload MP3s rather than WAVs: about 1 MB per minute instead of about 10. If you outgrow the free plan, only [src/filestore.ts](src/filestore.ts) needs to change to use Cloud Storage or another file host.
 
 **About the visualizers:** the demo audio host doesn't allow the browser to read its samples (no CORS headers), so the visualizers are generated from each song's BPM and energy, synced to the playback clock. Studio audio is analysed for real at upload time, to detect BPM and energy.
+
+## Roadmap: future features
+
+Planned next steps, roughly in priority order. Items marked ✅ are already built.
+
+**Listening**
+- [ ] **Playlists**: create, rename and reorder your own playlists, and add songs from any card or row.
+- [ ] **Faster start for Studio songs**: begin playing after the first 900 KB piece arrives (Media Source Extensions) instead of waiting for the whole file.
+- [ ] **Real audio-reactive visualizer** for Studio songs. They play from same-origin blob URLs, so the Web Audio `AnalyserNode` can read the real sound (demo songs keep the tempo-synced version).
+- [ ] **Save for offline**: download liked songs so they play without internet.
+- [ ] **Crossfade, sleep timer and equalizer** in the player settings.
+- [ ] **Artist and album pages**, with search across songs, artists and albums.
+- [ ] **Lyrics**: optional synced lyrics added in Studio and shown in the full-screen player.
+
+**Accounts and recommendations**
+- [ ] **Listener accounts** (optional sign-in) to sync likes, history and taste across devices, stored in Firestore instead of only `localStorage`.
+- [ ] **"Listeners also liked"**: add collaborative filtering on top of the current content-based engine once enough listeners have accounts.
+- [ ] **Daily mix**: an auto-generated playlist that refreshes every day from your taste profile.
+- [ ] **Share a song**: a link that opens straight into the full-screen player.
+
+**Studio (admin)**
+- [ ] **Song stats**: plays, likes and skips per song (anonymous counters).
+- [ ] **Bulk upload**: drop a folder of MP3s and fill in details for all of them at once.
+- [ ] **Read embedded tags**: pre-fill title, artist, album and cover from the file's ID3 tags.
+- [ ] **Scheduled releases**: publish a song automatically at a set date and time.
+- [ ] **Admin roles**: let admins add other admins from Studio, with an owner role, instead of editing the console by hand.
+
+**Platform**
+- [ ] **Custom domain** (for example `mymusic.com`) on Firebase Hosting.
+- [ ] **Bahasa Melayu / English** language switch.
+- [ ] **Automated tests + CI**: unit tests for the recommender and BPM detection, security-rules tests on the emulators, and a GitHub Actions deploy on push to `main`.
+- [ ] **Bigger catalogs**: move audio to Cloud Storage (Blaze) or another file host by swapping [src/filestore.ts](src/filestore.ts), once the free limits are reached.
+
+**Already built**
+- ✅ Content-based recommendations with explanations, autoplay and mood mixes
+- ✅ Three designs (Glass, Vinyl, Midnight), 3D coverflow and full-screen player
+- ✅ MyMusic Studio with BPM / energy detection, drafts and publishing
+- ✅ Free-plan audio storage in Firestore, with browser caching
+- ✅ Installable app (PWA), offline app shell, lock-screen controls
+
+Ideas and contributions are welcome: open an issue describing the feature.
 
 ---
 
